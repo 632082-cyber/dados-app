@@ -1,0 +1,60 @@
+pluginManagement {
+    def flutterSdkPath = getFlutterSdkPath()
+    if (flutterSdkPath == null) {
+        throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+    }
+
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
+    id "com.android.application" version "7.3.0" apply false
+    id "org.jetbrains.kotlin.android" version "1.7.10" apply false
+}
+
+include ":app"
+
+def getFlutterSdkPath() {
+    def properties = new Properties()
+    def localPropertiesFile = new File(rootDir, "local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.withInputStream { stream -> properties.load(stream) }
+    }
+
+    def flutterSdkPath = properties.getProperty("flutter.sdk")
+    if (flutterSdkPath == null) {
+        flutterSdkPath = System.getenv("FLUTTER_HOME")
+    }
+    return flutterSdkPath
+}
+
+def getFlutterVersion() {
+    def properties = new Properties()
+    def inputFile = new File(rootDir, "../pubspec.yaml")
+    if (inputFile.exists()) {
+        inputFile.eachLine { line ->
+            if (line != null) {
+                def match = line =~ /version:\s+(.*)/
+                if (match) properties.setProperty('flutter.versionName', match[0][1])
+            }
+        }
+    }
+    return properties
+}
+
+def flutterRoot = getFlutterSdkPath()
+def flutterAutoloaded = false
+
+if (flutterRoot != null) {
+    apply from: "$flutterRoot/packages/flutter_tools/gradle/app_plugin_loader.gradle"
+    flutterAutoloaded = true
+} else {
+    throw new GradleException('Flutter SDK not found. Define location with flutter.sdk in the local.properties file.')
+}
